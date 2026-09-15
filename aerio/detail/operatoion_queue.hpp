@@ -2,6 +2,7 @@
 #define AERIO_DETAIL_OPERATION_QUEUE_HPP
 
 #include "descriptor_operation.hpp"
+#include <cstddef>
 
 namespace aerio {
 namespace detail {
@@ -55,6 +56,18 @@ public:
         auto *tmp = front();
         pop();
         return tmp;
+    }
+
+
+    void splice(operation_queue &o)
+    {
+        if (_tail) 
+            _tail->_next = o._head;
+        else 
+            _head = o._head;
+        _tail = o._tail;
+
+        o._head = o._tail = nullptr;
     }
 
     
