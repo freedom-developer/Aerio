@@ -21,7 +21,8 @@ public:
         : _ctx(ctx),
         _family(family),
         _type(type),
-        _protocol(protocol)
+        _protocol(protocol),
+        _fd_op(nullptr)
     {
         _fd = ::socket(_family, _type, _protocol);
         if (_fd < 0) {
