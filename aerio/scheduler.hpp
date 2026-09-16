@@ -1,8 +1,8 @@
 #ifndef AERIO_SCHEDULER_HPP
 #define AERIO_SCHEDULER_HPP
 
-#include "detail/descriptor_operation.hpp"
-#include "detail/operatoion_queue.hpp"
+#include "detail/fd_operation.hpp"
+#include "detail/fd_opq.hpp"
 #include "reactor.hpp"
 
 #include <cstddef>
@@ -33,17 +33,19 @@ public:
         return 0;
     }
 
+    reactor& get_actor() { return _actor; }
+
 private:
     /* 可能多线程调用此接口 */
     int do_run_one()
     {
         /* 线程私有的操作队列 */
-        detail::operation_queue private_op_queue;
+        detail::fd_opq private_op_queue;
 
         pthread_mutex_lock(&_mtx);
 
         while (!_stopped) {
-            detail::descriptor_operation *desc_op = nullptr;
+            detail::fd_operation *desc_op = nullptr;
 
             /* 互斥地从全局操作队列中获取一个操作, pthread_cond_wait进入休眠前会unlock(_mtx) */
             while (_op_queue.empty()) 
@@ -73,9 +75,9 @@ private:
     }
 
     bool _stopped;
-    detail::operation_queue _op_queue;
+    detail::fd_opq _op_queue;
     reactor _actor;
-    detail::descriptor_operation _tag_op{};
+    detail::fd_operation _tag_op{};
     ::pthread_mutex_t _mtx;
     ::pthread_cond_t _cond;
 };

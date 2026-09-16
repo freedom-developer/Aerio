@@ -1,25 +1,25 @@
-#ifndef AERIO_DETAIL_OPERATION_QUEUE_HPP
-#define AERIO_DETAIL_OPERATION_QUEUE_HPP
+#ifndef AERIO_DETAIL_FD_OPQ_HPP
+#define AERIO_DETAIL_FD_OPQ_HPP
 
-#include "descriptor_operation.hpp"
+#include "fd_operation.hpp"
 #include <cstddef>
 
 namespace aerio {
 namespace detail {
 
-class operation_queue
+class fd_opq
 {
 public:
-    operation_queue() 
+    fd_opq() 
         : _head(nullptr), _tail(nullptr) 
     {}
 
-    bool is_enqueued(descriptor_operation *desc_op)
+    bool is_enqueued(fd_operation *desc_op)
     {
         return desc_op->_next != nullptr || _tail == desc_op;
     }
 
-    void push(descriptor_operation *desc_op)
+    void push(fd_operation *desc_op)
     {
         desc_op->_next = nullptr;
         if (_tail) {
@@ -35,7 +35,7 @@ public:
         return _head == nullptr;
     }
 
-    descriptor_operation * front()
+    fd_operation * front()
     {
         return _head;
     }
@@ -51,7 +51,7 @@ public:
         }
     }
 
-    descriptor_operation *front_pop()
+    fd_operation *front_pop()
     {
         auto *tmp = front();
         pop();
@@ -59,7 +59,7 @@ public:
     }
 
 
-    void splice(operation_queue &o)
+    void splice(fd_opq &o)
     {
         if (_tail) 
             _tail->_next = o._head;
@@ -72,7 +72,7 @@ public:
 
     
 private:
-    descriptor_operation *_head, *_tail;
+    fd_operation *_head, *_tail;
 };
 
 }
