@@ -1,0 +1,9 @@
+CompileFlags:
+  CompilationDatabase: test
+  Add:
+    # The public headers live below the repository root.  Keep this relative
+    # so the configuration works when the repository is moved to another
+    # directory or checked out by another developer.
+    - -std=c++17
+    - -I../aerio
+    - -I..
