@@ -24,7 +24,7 @@ public:
     {
         return tcp(AF_INET6);
     }
-    
+
     int family() const { return _family; }
     int type() const { return SOCK_STREAM; }
     int protocol() const { return IPPROTO_TCP; }
@@ -37,6 +37,9 @@ private:
     tcp(int family) : _family(family) {}
     int _family;
 };
+
+static tcp v4 = tcp::v4();
+static tcp v6 = tcp::v6();
 
 }
 }

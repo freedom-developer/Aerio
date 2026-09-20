@@ -32,11 +32,6 @@ public:
         }
     }
 
-    void async_accept()
-    {
-        
-    }
-
 private:
 
 
