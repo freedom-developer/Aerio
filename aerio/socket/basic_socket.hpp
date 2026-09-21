@@ -61,13 +61,12 @@ public:
     );
 
     explicit basic_socket(const ProtocolType& protocol, aerio::core::io_context& ctx)
-        : detail::socket(protocol.family(), protocol.type(), protocol.protocol()),
-          _ctx(ctx)
+        : detail::socket(ctx, protocol.family(), protocol.type(), protocol.protocol())
     {}
 
 
 private:
-    aerio::core::io_context &_ctx;
+    
 };
 
 }
