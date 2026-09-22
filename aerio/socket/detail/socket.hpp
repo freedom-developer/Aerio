@@ -1,12 +1,14 @@
 #ifndef AERIO_SOCKET_DETAIL_SOCKET_HPP
 #define AERIO_SOCKET_DETAIL_SOCKET_HPP
 
+#include "core/event.hpp"
 #include <aerio/ip/detail/endpoint.hpp>
 #include <aerio/core/io_context.hpp>
 
 #include <asm-generic/errno.h>
 #include <cstddef>
 #include <netinet/in.h>
+#include <new>
 #include <stdexcept>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -73,6 +75,22 @@ public:
         set_nonblock();
 
         // 将此_fd加入epollfd中，并设置回调
+        core::event *ev = new core::event(_fd, socket::accept);
+        _ctx.epoll_add_fd(_fd, EPOLLIN, ev);
+    }
+
+    static void accept(core::event *ev)
+    {
+        int fd;
+        sockaddr_in addr4;
+        sockaddr_in6 addr6;
+
+        while ((fd = ::accept(ev->_fd, NULL, NULL)) > 0) {
+            // accept成功场景
+            
+        }
+
+        // 处理accept失败场景
     }
 
     void set_nonblock()
