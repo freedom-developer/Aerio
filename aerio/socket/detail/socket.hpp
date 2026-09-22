@@ -17,6 +17,9 @@
 
 #include <cerrno>
 #include <system_error>
+#include <iostream>
+#include <string>
+#include <string.h>
 
 namespace aerio {
 namespace socket {
@@ -87,7 +90,8 @@ public:
 
         while ((fd = ::accept(ev->_fd, NULL, NULL)) > 0) {
             // accept成功场景
-            
+            std::cout << "there is someone connected." << std::endl;
+            ::close(fd);
         }
 
         // 处理accept失败场景
@@ -107,7 +111,7 @@ public:
         auto ret = fcntl(_fd, F_SETFL, &fl);
         if (ret < 0) {
             auto err = errno;
-            throw std::system_error(err, std::system_category(), "fcntl(F_SETFL) failed");
+            throw std::system_error(err, std::system_category(), "fcntl(F_SETFL) failed, " + std::string(strerror(err)));
         }
 
         _is_nonblock = true;

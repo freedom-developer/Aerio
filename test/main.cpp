@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 
 #include "aerio/ip/basic_endpoint.hpp"
@@ -11,14 +12,18 @@ using namespace aerio::ip;
 int main(void)
 {
     std::cout << "Hello Aerio" << std::endl;
-    tcp::endpoint ep(v4, 1203, "127.0.0.1");
+    try {
+        tcp::endpoint ep(v4, 1203, "127.0.0.1");
 
-    aerio::core::io_context ctx;
-    tcp::listener listener(v4, ctx, ep);
+        aerio::core::io_context ctx;
+        tcp::listener listener(v4, ctx, ep);
 
-    // listener.async_accept
+        listener.async_accept();
 
-    ctx.run();
+        ctx.run();
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
     
     return 0;
 }
