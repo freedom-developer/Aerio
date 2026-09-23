@@ -2,14 +2,18 @@
 #define AERIO_SOCKET_DETAIL_SOCKET_HPP
 
 #include "core/event.hpp"
+#include "core/operation.hpp"
 #include <aerio/ip/detail/endpoint.hpp>
 #include <aerio/core/io_context.hpp>
+// #include <aerio/ip/tcp.hpp>
 
+#include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <cstddef>
 #include <netinet/in.h>
 #include <new>
 #include <stdexcept>
+#include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -27,14 +31,17 @@ namespace detail {
 
 class socket {
 public:
-    socket(aerio::core::io_context& ctx, int family, int type, int protocol = 0)
+    socket(aerio::core::io_context& ctx, int family, int type, int protocol = 0, int fd = -1)
         : _family(family),
         _type(type),
         _protocol(protocol),
         _is_nonblock(false),
-        _ctx(ctx)
+        _ctx(ctx),
+        _op(nullptr),
+        _fd(fd)
     {
-        _fd = ::socket(_family, _type, _protocol);
+        if (_fd < 0)
+            _fd = ::socket(_family, _type, _protocol);
         if (_fd < 0) {
             auto err = errno;
             throw std::system_error{err, std::system_category(), "epoll_cretae"};
@@ -47,6 +54,8 @@ public:
     {
         if (_fd > 0)
             ::close(_fd);
+        if (_op)
+            delete _op;
     }
 
     int bind(const aerio::ip::detail::endpoint& ep)
@@ -73,28 +82,18 @@ public:
         return ::listen(_fd, 4096);
     }
 
-    void async_accept()
-    {
-        set_nonblock();
-
-        // 将此_fd加入epollfd中，并设置回调
-        core::event *ev = new core::event(_fd, socket::accept);
-        _ctx.epoll_add_fd(_fd, EPOLLIN, ev);
-    }
-
-    static void accept(core::event *ev)
+    int accept(aerio::ip::detail::endpoint &ep)
     {
         int fd;
-        sockaddr_in addr4;
-        sockaddr_in6 addr6;
-
-        while ((fd = ::accept(ev->_fd, NULL, NULL)) > 0) {
-            // accept成功场景
-            std::cout << "there is someone connected." << std::endl;
-            ::close(fd);
+        socklen_t addrlen;
+        if (_family == AF_INET) {
+            addrlen = sizeof(ep.v4());
+            fd = ::accept(_fd, (sockaddr *)&ep.v4(), &addrlen);
+        } else {
+            addrlen = sizeof(ep.v6());
+            fd = ::accept(_fd, (sockaddr *)&ep.v6(), &addrlen);
         }
-
-        // 处理accept失败场景
+        return fd;
     }
 
     void set_nonblock()
@@ -108,7 +107,7 @@ public:
             throw std::system_error(err, std::system_category(), "fcntl(F_GETFL) failed");
         }
         fl |= O_NONBLOCK;
-        auto ret = fcntl(_fd, F_SETFL, &fl);
+        auto ret = fcntl(_fd, F_SETFL, fl);
         if (ret < 0) {
             auto err = errno;
             throw std::system_error(err, std::system_category(), "fcntl(F_SETFL) failed, " + std::string(strerror(err)));
@@ -117,11 +116,28 @@ public:
         _is_nonblock = true;
     }
 
+    int fd()
+    {
+        return _fd;
+    }
+
+    aerio::core::io_context& context()
+    {
+        return _ctx;
+    }
+
+    int family()
+    {
+        return _family;
+    }
+
 private:
     int _fd;
     int _family, _type, _protocol;
     bool _is_nonblock;
     aerio::core::io_context &_ctx;
+
+    core::operation *_op;
 };
 
 }

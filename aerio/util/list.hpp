@@ -20,6 +20,11 @@ static inline void INIT_LIST_HEAD(list_head *list)
     list->next = list;
 }
 
+static inline bool list_empty(const list_head *head)
+{
+    return head->next == head;
+}
+
 static inline void __list_add(list_head *_new, list_head *prev, list_head *next)
 {
     next->prev = _new;

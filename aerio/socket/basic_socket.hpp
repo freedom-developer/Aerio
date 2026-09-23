@@ -1,6 +1,7 @@
 #ifndef AERIO_SOCKET_BASIC_SOCKET_HPP
 #define AERIO_SOCKET_BASIC_SOCKET_HPP
 
+#include "core/operation.hpp"
 #include <aerio/ip/basic_endpoint.hpp>
 #include <aerio/socket/detail/socket.hpp>
 #include <aerio/core/io_context.hpp>
@@ -60,13 +61,17 @@ public:
         "ProtocolType must provide a const protocol() member returning int"
     );
 
-    explicit basic_socket(const ProtocolType& protocol, aerio::core::io_context& ctx)
-        : detail::socket(ctx, protocol.family(), protocol.type(), protocol.protocol())
+    explicit basic_socket(const ProtocolType& protocol, aerio::core::io_context& ctx, int fd = -1)
+        : detail::socket(ctx, protocol.family(), protocol.type(), protocol.protocol(), fd)
     {}
 
-
+    core::operation& op()
+    {
+        return _op;
+    }
 private:
     
+    core::operation _op;
 };
 
 }

@@ -76,8 +76,18 @@ public:
     {
         return _data.v4;
     }
+    
+    sockaddr_in& v4()
+    {
+        return _data.v4;
+    }
 
     const sockaddr_in6 & v6() const
+    {
+        return _data.v6;
+    }
+
+    sockaddr_in6& v6()
     {
         return _data.v6;
     }
