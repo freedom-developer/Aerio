@@ -2,6 +2,7 @@
 #define AERIO_SOCKET_LISTENER_HPP
 
 #include "ip/detail/endpoint.hpp"
+#include "socket/detail/socket.hpp"
 #include <aerio/core/operation.hpp>
 #include <aerio/ip/basic_endpoint.hpp>
 #include <aerio/socket/basic_socket.hpp>
@@ -58,7 +59,7 @@ public:
                 auto fd = sk->accept(ep);
                 if (fd >= 0) {
                     std::cout << "someone connect to this server" << std::endl;
-                    
+                    detail::socket sock(sk->context(), )
                 } else {
                     if (errno == EINTR)
                         continue;
