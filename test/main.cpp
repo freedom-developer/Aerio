@@ -1,24 +1,19 @@
+#include "net/protocol.hpp"
 #include <exception>
 #include <iostream>
 
-#include "aerio/ip/basic_endpoint.hpp"
-#include "aerio/ip/tcp.hpp"
-#include "aerio/ip/udp.hpp"
-#include "core/io_context.hpp"
-
-using namespace aerio;
-using namespace aerio::ip;
 
 
+#include <aerio/aerio.hpp>
 
 int main(void)
 {
     std::cout << "Hello Aerio" << std::endl;
     try {
-        tcp::endpoint ep(v4, 1203, "127.0.0.1");
+        aerio::net::endpoint ep(aerio::net::tcp_v4, 1203, "127.0.0.1");
 
         aerio::core::io_context ctx;
-        tcp::listener listener(v4, ctx, ep);
+        aerio::net::listener listener(ctx, ep);
 
         listener.async_accept();
 

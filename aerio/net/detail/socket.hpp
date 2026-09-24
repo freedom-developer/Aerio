@@ -1,11 +1,11 @@
-#ifndef AERIO_SOCKET_DETAIL_SOCKET_HPP
-#define AERIO_SOCKET_DETAIL_SOCKET_HPP
+#ifndef AERIO_NET_DETAIL_SOCKET_HPP
+#define AERIO_NET_DETAIL_SOCKET_HPP
 
-#include "core/event.hpp"
-#include "core/operation.hpp"
-#include <aerio/ip/detail/endpoint.hpp>
+
+#include <aerio/core/operation.hpp>
+#include <aerio/net/protocol.hpp>
 #include <aerio/core/io_context.hpp>
-// #include <aerio/ip/tcp.hpp>
+#include <aerio/net/endpoint.hpp>
 
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
@@ -26,26 +26,25 @@
 #include <string.h>
 
 namespace aerio {
-namespace socket {
+namespace net {
 namespace detail {
 
 class socket {
 public:
-    socket(aerio::core::io_context& ctx, int family, int type, int protocol = 0, int fd = -1)
-        : _family(family),
-        _type(type),
-        _protocol(protocol),
+    socket(aerio::core::io_context& ctx, const net::protocol_type &protocol, int flags = 0, int fd = -1)
+        : _protocol(protocol),
         _is_nonblock(false),
         _ctx(ctx),
-        _op(nullptr),
         _fd(fd)
     {
+        auto type = _protocol.type() | (flags & (SOCK_NONBLOCK | SOCK_CLOEXEC));
         if (_fd < 0)
-            _fd = ::socket(_family, _type, _protocol);
+            _fd = ::socket(_protocol.family(), type, _protocol.protocol());
         if (_fd < 0) {
             auto err = errno;
             throw std::system_error{err, std::system_category(), "epoll_cretae"};
         }
+
         if (type & SOCK_NONBLOCK)
             _is_nonblock = true;
     }
@@ -54,27 +53,16 @@ public:
     {
         if (_fd > 0)
             ::close(_fd);
-        if (_op)
-            delete _op;
     }
 
-    int bind(const aerio::ip::detail::endpoint& ep)
+    int bind(const aerio::net::endpoint& ep)
     {
-        if (_family != ep.family()) {
+        if ( _protocol.family() != ep.family()) {
             errno = EAFNOSUPPORT;
             return -1;
         }
 
-        if (_family == AF_INET) {
-            const auto& addr = ep.v4();
-            return ::bind(_fd, (const sockaddr *)&addr, sizeof(addr));    
-        } else if (_family == AF_INET6) {
-            const auto& addr = ep.v6();
-            return ::bind(_fd, (const sockaddr*)&addr, sizeof(addr));
-        } else {
-            errno = EAFNOSUPPORT;
-            return -1;
-        }
+        return ::bind(_fd, ep.sockaddr_ptr(), ep.size());
     }
 
     int listen()
@@ -82,18 +70,15 @@ public:
         return ::listen(_fd, 4096);
     }
 
-    int accept(aerio::ip::detail::endpoint &ep)
+    int accept(aerio::net::endpoint &ep)
     {
-        int fd;
-        socklen_t addrlen;
-        if (_family == AF_INET) {
-            addrlen = sizeof(ep.v4());
-            fd = ::accept(_fd, (sockaddr *)&ep.v4(), &addrlen);
-        } else {
-            addrlen = sizeof(ep.v6());
-            fd = ::accept(_fd, (sockaddr *)&ep.v6(), &addrlen);
+        if ( _protocol.family() != ep.family()) {
+            errno = EAFNOSUPPORT;
+            return -1;
         }
-        return fd;
+
+        socklen_t addrlen = static_cast<socklen_t>(ep.size());
+        return ::accept(_fd, ep.sockaddr_ptr(), &addrlen);
     }
 
     void set_nonblock()
@@ -121,23 +106,29 @@ public:
         return _fd;
     }
 
-    aerio::core::io_context& context()
+    aerio::core::io_context& context() noexcept
     {
         return _ctx;
     }
 
-    int family()
+    core::operation& op() noexcept
     {
-        return _family;
+        return _op;
     }
+
+    const net::protocol_type& protocol() const noexcept
+    {
+        return _protocol;
+    }
+    
 
 private:
     int _fd;
-    int _family, _type, _protocol;
+    const net::protocol_type &_protocol;
     bool _is_nonblock;
     aerio::core::io_context &_ctx;
 
-    core::operation *_op;
+    core::operation _op;
 };
 
 }

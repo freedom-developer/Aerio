@@ -7,7 +7,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include <aerio/core/event.hpp>
 #include <aerio/util/list.hpp>
 
 #include <system_error>
@@ -39,7 +38,6 @@ public:
     void run()
     {
         assert(_epfd >= 0);
-        event *ev;
         while (!_stop) {
             auto *op = _opq.front_del();
             if (op) {
