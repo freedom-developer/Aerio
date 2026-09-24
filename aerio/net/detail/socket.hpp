@@ -51,9 +51,13 @@ public:
 
     ~socket()
     {
-        if (_fd > 0)
+        if (_fd >= 0)
             ::close(_fd);
+        _fd = -1;
     }
+
+    socket(const socket &) = delete;
+    socket& operator=(const socket&) = delete;
 
     int bind(const aerio::net::endpoint& ep)
     {

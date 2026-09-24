@@ -19,7 +19,8 @@ namespace core {
 class io_context {
 public:
     io_context()
-        : _epfd(epoll_create1(EPOLL_CLOEXEC))
+        : _epfd(epoll_create1(EPOLL_CLOEXEC)),
+        _stop(false)
     {
         if (_epfd < 0) {
             const auto err = errno;
@@ -43,7 +44,6 @@ public:
             if (op) {
                 if (op == &_epfd_op) {
                     do_epoll_wait();
-
                     // 谁取的，谁负责重新压入
                     _opq.push(&_epfd_op);
                 } else {
@@ -53,6 +53,14 @@ public:
                 // todo: 等待
             }
         }
+    }
+
+    void stop()
+    {
+        if (_stop)
+            return;
+        
+        _stop = true;
     }
 
     void do_epoll_wait()

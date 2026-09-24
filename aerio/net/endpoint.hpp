@@ -23,10 +23,6 @@ public:
         : _data{}, 
         _protocol(protocol)
     {
-        if (port < 0 || port > 65535) {
-            throw std::invalid_argument("port is invalid: " + std::to_string(port));
-        }
-
         switch (_protocol.family()) {
         case AF_INET: {
             _data.v4.sin_family = AF_INET;

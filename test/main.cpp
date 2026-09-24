@@ -1,8 +1,6 @@
-#include "net/protocol.hpp"
 #include <exception>
 #include <iostream>
-
-
+#include <memory>
 
 #include <aerio/aerio.hpp>
 
@@ -15,7 +13,9 @@ int main(void)
         aerio::core::io_context ctx;
         aerio::net::listener listener(ctx, ep);
 
-        listener.async_accept();
+        listener.async_accept([](int err, std::shared_ptr<aerio::net::detail::socket> sock) {
+            // std::cout << sock
+        });
 
         ctx.run();
     } catch (std::exception &e) {
